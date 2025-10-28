@@ -53,6 +53,12 @@ const NavbarLayout = () => {
                             icon: 'pi pi-shopping-cart',
                             command: () => navigate('/pedidos'),
                             className: location.pathname.includes('/pedidos') ? 'active-menu-item' : ''
+                        },
+                        {
+                            label: 'Usuarios',
+                            icon: 'pi pi-users',
+                            command: () => navigate('/usuarios'),
+                            className: location.pathname.includes('/usuarios') ? 'active-menu-item' : ''
                         }
                     ]
                 }

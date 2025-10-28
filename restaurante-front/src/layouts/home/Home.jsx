@@ -46,7 +46,8 @@ const Home = () => {
                 { label: "Gestionar Platos", icon: "pi pi-th-large", path: "/platos", color: "#8B5CF6" },
                 { label: "Gestionar Mesas", icon: "pi pi-table", path: "/mesas", color: "#EC4899" },
                 { label: "Ver Pedidos", icon: "pi pi-shopping-cart", path: "/pedidos", color: "#3B82F6" },
-                { label: "Crear Pedido", icon: "pi pi-plus-circle", path: "/pedidos/crear", color: "#10B981" }
+                { label: "Crear Pedido", icon: "pi pi-plus-circle", path: "/pedidos/crear", color: "#10B981" },
+                { label: "Gestionar Usuarios", icon: "pi pi-users", path: "/usuarios", color: "#EC4899" }
             ],
             mesero: [
                 { label: "Crear Pedido", icon: "pi pi-plus-circle", path: "/pedidos/crear", color: "#10B981" },

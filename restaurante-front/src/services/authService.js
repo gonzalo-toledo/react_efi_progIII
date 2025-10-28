@@ -1,14 +1,13 @@
-import { data } from "react-router-dom";
 import api from "./api";
-// import ResetPassword from "../auth/resetPassword";
 
 const authService = {
     login: (credentials) => api.post("auth/login", credentials),
     register: (data) => api.post("auth/register", data),
-    forgotPassword: (email) => api.post("auth/forgotPassword", { email }),
+    forgotPassword: (email) => api.post("auth/forgot-password", { email }),
     resetPassword: (data) => api.post("auth/reset-password", data),
-    updateProfile: (data) => api.put("auth/profile", data), 
+    updateProfile: (data) => api.put("auth/update-profile", data),
     roles: () => api.get("auth/roles"),
+    profile: () => api.get("auth/profile"), 
 }
 
-export default authService
+export default authService;

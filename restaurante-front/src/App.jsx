@@ -10,6 +10,7 @@ import { TOAST_REF } from './utils/ToastRef';
 import { AuthProvider } from './context/AuthContext';
 
 import PrivateRoute from './components/PrivateRoute';
+import AdminRoute from './components/AdminRoute';
 import Home from './layouts/home/Home';
 import NavbarLayout from './layouts/home/NavbarLayout';
 
@@ -20,6 +21,8 @@ import { MesasProvider } from './context/MesasContext';
 import MesasModule from './layouts/mesas';
 import { PedidosProvider } from './context/PedidosContext';
 import PedidosModule from './layouts/pedidos';
+import UsersPanel from './components/auth/UsersPanel';
+import EditProfile from './components/auth/EditProfile';
 
 function App() {
     return (
@@ -33,6 +36,19 @@ function App() {
                     {/* Grupo de rutas privadas con Navbar */}
                     <Route element={<PrivateRoute><NavbarLayout /></PrivateRoute>}>
                         <Route path="/" element={<Home />} />
+                        
+                        {/* Editar perfil */}
+                        <Route path="/profile" element={<EditProfile />} />
+
+                        {/* Panel de usuarios - Solo admin */}
+                        <Route 
+                            path="/usuarios" 
+                            element={
+                                <AdminRoute>
+                                    <UsersPanel />
+                                </AdminRoute>
+                            } 
+                        />
 
                         <Route 
                             path="/platos/*" 

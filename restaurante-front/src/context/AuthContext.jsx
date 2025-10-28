@@ -66,38 +66,52 @@ export const AuthProvider = ({ children }) => {
 
     const updateProfile = async (profileData, { redirect = false } = {}) => {
         try {
-        const response = await authService.updateProfile(profileData);
-        const { status, data } = response;
+            const response = await authService.updateProfile(profileData);
+            const { status, data } = response;
 
-        if (status === 200) {
-            notifySucces(data?.message || "Perfil actualizado correctamente");
+            if (status === 200) {
+                notifySucces(data?.message || "Perfil actualizado correctamente");
 
-            if (data?.token) {
-            localStorage.setItem("token", data.token);
-            const newUser = decodeUser(data.token);
-            if (newUser) setUser(newUser);
-            } else if (data?.user) {
-            const updated = {
-                nombre: data.user.nombre ?? user?.nombre,
-                email: data.user.email ?? user?.email,
-                rol: data.user.rol ?? user?.rol,
-            };
-            setUser(updated);
+                // Si el backend devuelve un nuevo token (con datos actualizados)
+                if (data?.token) {
+                    localStorage.setItem("token", data.token);
+                    const newUser = decodeUser(data.token);
+                    if (newUser) setUser(newUser);
+                } 
+                // Si el backend devuelve el objeto user directamente
+                else if (data?.user) {
+                    setUser((prev) => ({
+                        ...prev,
+                        nombre: data.user.nombre ?? prev?.nombre,
+                        email: data.user.email ?? prev?.email,
+                        rol: data.user.rol ?? prev?.rol,
+                    }));
+                }
+                // Si el backend devuelve los campos directamente en data (como tu controller actual)
+                else if (data?.nombre || data?.email) {
+                    setUser((prev) => ({
+                        ...prev,
+                        nombre: data.nombre ?? prev?.nombre,
+                        email: data.email ?? prev?.email,
+                        rol: data.rol ?? prev?.rol,
+                    }));
+                }
+                // Fallback: actualizar solo con lo que envió el usuario
+                else {
+                    setUser((prev) => ({ ...prev, ...profileData }));
+                }
+
+                if (redirect) navigate("/");
+                return { ok: true, data };
             } else {
-            setUser((prev) => ({ ...prev, ...profileData }));
+                notifyError(data?.message || "No se pudo actualizar el perfil");
+                return { ok: false, data };
             }
-
-            if (redirect) navigate("/");
-            return { ok: true, data };
-        } else {
-            notifyError(data?.message || "No se pudo actualizar el perfil");
-            return { ok: false, data };
-        }
         } catch (error) {
-        console.error("Update profile error:", error?.response || error);
-        const msg = error?.response?.data?.message || "Error actualizando perfil";
-        notifyError(msg);
-        return { ok: false, error };
+            console.error("Update profile error:", error?.response || error);
+            const msg = error?.response?.data?.message || "Error actualizando perfil";
+            notifyError(msg);
+            return { ok: false, error };
         }
     };
 
@@ -173,7 +187,7 @@ export const AuthProvider = ({ children }) => {
                 logout,
                 forgotPassword,
                 resetPassword,
-                loadingAuth   // ✅ ¡AGREGAR ESTO!
+                loadingAuth   
             }}
         >
             {children}

@@ -9,54 +9,58 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const navigate = useNavigate();
+    const [loadingAuth, setLoadingAuth] = useState(true); // ✅ NUEVO
+
+
 
     const decodeUser = (token) => {
         try {
-        const decoded = jwtDecode(token);
-        
-        if (!decoded || (decoded.exp && decoded.exp * 1000 < Date.now())) {
-            return null;
-        }
-        return {
-            id: decoded.id,
-            nombre: decoded.nombre || "",
-            email: decoded.email || "",
-            rol: decoded.rol || "",
-        };
+            const decoded = jwtDecode(token);
+            if (!decoded || (decoded.exp && decoded.exp * 1000 < Date.now())) {
+                return null;
+            }
+            return {
+                id: decoded.id,
+                nombre: decoded.nombre || "",
+                email: decoded.email || "",
+                rol: decoded.rol || ""  // ✅ nos aseguramos que el rol exista
+            };
         } catch (e) {
-        console.error("Error decoding token:", e);
-        return null;
+            console.error("Error decoding token:", e);
+            return null;
         }
     };
 
     useEffect(() => {
         const token = localStorage.getItem("token");
-        if (!token) return;
-
-        const userLogued = decodeUser(token);
-        if (userLogued) {
-        setUser(userLogued);
-        } else {
-        localStorage.removeItem("token");
-        setUser(null);
+        if (token) {
+            const userLogued = decodeUser(token);
+            if (userLogued) {
+                setUser(userLogued);
+            } else {
+                localStorage.removeItem("token");
+            }
         }
+        setLoadingAuth(false); // ✅ listo para renderizar
     }, []);
 
-    const login = async (credentials)=>{
+    const login = async (credentials) => {
         try {
-            const {data, status} = await authService.login(credentials)
-            const token = data?.token
-            localStorage.setItem('token', token)
-            const base64Payload = token.split('.')[1];
-            const decodedPayload = JSON.parse(atob(base64Payload));
-            setUser({ ...decodedPayload, token });
-            navigate('/platos')
+            const { data } = await authService.login(credentials);
+            const token = data?.token;
+            localStorage.setItem("token", token);
+
+            // ✅ usar decodeUser SIEMPRE
+            const userLogued = decodeUser(token);
+            setUser(userLogued);
+
+            navigate("/platos");
         } catch (error) {
             console.log(error);
-            // alert("Hubo error al iniciar sesion")
-            notifyError(error.message)
+            notifyError(error.message);
         }
-    }
+    };
+
 
 
 
@@ -160,9 +164,19 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider
-        value={{ user, setUser, register, login, updateProfile, logout, forgotPassword, resetPassword }}
+            value={{
+                user,
+                setUser,
+                register,
+                login,
+                updateProfile,
+                logout,
+                forgotPassword,
+                resetPassword,
+                loadingAuth   // ✅ ¡AGREGAR ESTO!
+            }}
         >
-        {children}
+            {children}
         </AuthContext.Provider>
     );
 };

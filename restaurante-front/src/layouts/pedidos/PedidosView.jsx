@@ -8,6 +8,7 @@ import { confirmDialog, ConfirmDialog } from "primereact/confirmdialog";
 import { Tag } from "primereact/tag";
 import { Card } from "primereact/card";
 import { useNavigate } from "react-router-dom";
+import { exportToPdf } from '../../utils/ExportToPdf'
 
 import { PedidosContext } from "../../context/PedidosContext";
 import { AuthContext } from "../../context/AuthContext";
@@ -51,6 +52,23 @@ const PedidosView = () => {
             rejectLabel: "Cancelar",
             accept: async () => await closePedido(id),
         });
+    };
+
+    const handleExportPDF = () => {
+        const title = "Pedidos del Momento" + new Date().toLocaleString();
+
+        const columns = ["ID", "Fecha", "Mesa", "Mesero", "Estado", "Total"];
+
+        const data = pedidosVisibles.map((p) => ({
+            id: p.id,
+            fecha: formatFecha(p.created_at),
+            mesa: `Mesa ${p.mesaId}`,
+            mesero: p.meseroId,
+            estado: p.estado,
+            total: `$${p.total}`,
+        }));
+
+        exportToPdf(data, title, columns);
     };
 
     // Confirmar cambio de estado
@@ -222,6 +240,13 @@ const PedidosView = () => {
                             className="create-btn"
                         />
                     )}
+                    <Button
+                        label="Exportar PDF"
+                        icon="pi pi-file-pdf"
+                        severity="danger"
+                        size="large"
+                        onClick={handleExportPDF}
+                    />
                 </div>
 
                 {/* Stats Cards */}

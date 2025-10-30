@@ -1,35 +1,106 @@
 // layouts/platos/PlatosView.jsx
-import { Fragment, useContext } from "react";
+import { Fragment, useContext, useState } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { PlatosContext } from "../../context/PlatosContext";
 import { AuthContext } from "../../context/AuthContext";
 import { Button } from "primereact/button";
-import { useNavigate } from "react-router-dom";
 import { InputText } from "primereact/inputtext";
 import { confirmDialog, ConfirmDialog } from "primereact/confirmdialog";
 import { InputSwitch } from "primereact/inputswitch";
 import { Card } from "primereact/card";
 import { Tag } from "primereact/tag";
+import { Dialog } from "primereact/dialog";
+import { InputNumber } from "primereact/inputnumber";
+import { InputTextarea } from "primereact/inputtextarea";
 
 const PlatosView = () => {
     const {
         platos,
-        setEditingPlato,
         loading,
         lazy,
         setLazy,
         deletePlato,
         toggleDisponibilidad,
+        createPlato,
+        editPlato,
     } = useContext(PlatosContext);
 
     const { user } = useContext(AuthContext);
-    const navigate = useNavigate();
-        
-    
+
+    // Estados para el modal
+    const [showDialog, setShowDialog] = useState(false);
+    const [editMode, setEditMode] = useState(false);
+    const [form, setForm] = useState({
+        id: null,
+        nombre: '',
+        precio: '',
+        descripcion: '',
+        disponibilidad: true,
+    });
+
+    // Abrir modal para crear
+    const openNew = () => {
+        setForm({
+            id: null,
+            nombre: '',
+            precio: '',
+            descripcion: '',
+            disponibilidad: true,
+        });
+        setEditMode(false);
+        setShowDialog(true);
+    };
+
+    // Abrir modal para editar
     const handleEdit = (plato) => {
-        setEditingPlato(plato);
-        navigate(`/platos/editar/${plato.id}`);
+        setForm({
+            id: plato.id,
+            nombre: plato.nombre,
+            precio: plato.precio,
+            descripcion: plato.descripcion || '',
+            disponibilidad: plato.disponibilidad,
+        });
+        setEditMode(true);
+        setShowDialog(true);
+    };
+
+    // Enviar formulario
+    const handleSubmit = async () => {
+        // Validaciones básicas
+        if (!form.nombre || form.nombre.trim() === '') {
+            alert('El nombre es requerido');
+            return;
+        }
+        if (!form.precio || form.precio <= 0) {
+            alert('El precio debe ser mayor a 0');
+            return;
+        }
+
+        const payload = {
+            nombre: form.nombre,
+            precio: form.precio,
+            descripcion: form.descripcion,
+            disponibilidad: form.disponibilidad,
+        };
+
+        let success;
+        if (editMode) {
+            success = await editPlato({ ...payload, id: form.id });
+        } else {
+            success = await createPlato(payload);
+        }
+
+        if (success) {
+            setShowDialog(false);
+            setForm({
+                id: null,
+                nombre: '',
+                precio: '',
+                descripcion: '',
+                disponibilidad: true,
+            });
+        }
     };
 
     const handleDelete = (id) => {
@@ -105,7 +176,6 @@ const PlatosView = () => {
     };
 
     const stats = getStats();
-    console.log("Render PlatosView user:", user);
 
     return (
         <Fragment>
@@ -125,7 +195,7 @@ const PlatosView = () => {
                         <Button
                             label="Nuevo Plato"
                             icon="pi pi-plus"
-                            onClick={() => navigate("/platos/crear")}
+                            onClick={openNew}
                             size="large"
                             className="create-btn"
                         />
@@ -183,17 +253,17 @@ const PlatosView = () => {
                 {/* Tabla de datos */}
                 <Card className="table-card">
                     <DataTable
-                        key={user?.rol} // fuerza re-render cuando el rol cambia
+                        key={user?.rol}
                         value={platosVisibles || []}
                         lazy
                         first={lazy?.first}
                         rows={lazy?.rows}
                         onPage={(e) =>
                             setLazy({
-                            ...lazy,
-                            first: e.first,
-                            rows: e.rows,
-                            page: e.page,
+                                ...lazy,
+                                first: e.first,
+                                rows: e.rows,
+                                page: e.page,
                             })
                         }
                         loading={loading}
@@ -203,7 +273,7 @@ const PlatosView = () => {
                         }
                         stripedRows
                         responsiveLayout="scroll"
-                        >
+                    >
                         <Column field="nombre" header="Nombre" sortable style={{ fontWeight: 600 }} />
                         <Column field="precio" header="Precio" sortable body={precioTemplate} />
                         <Column field="descripcion" header="Descripción" body={descripcionTemplate} />
@@ -221,9 +291,82 @@ const PlatosView = () => {
                                 style={{ minWidth: '150px' }} 
                             />
                         )}
-                        </DataTable>
+                    </DataTable>
                 </Card>
             </div>
+
+            {/* Dialog Modal */}
+            <Dialog
+                visible={showDialog}
+                style={{ width: '500px' }}
+                header={editMode ? 'Editar Plato' : 'Nuevo Plato'}
+                modal
+                onHide={() => setShowDialog(false)}
+            >
+                <div className="flex flex-column gap-3">
+                    <div className="field">
+                        <label htmlFor="nombre" className="font-bold">Nombre *</label>
+                        <InputText
+                            id="nombre"
+                            value={form.nombre}
+                            onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                            className="w-full"
+                            placeholder="Ingrese el nombre del plato"
+                        />
+                    </div>
+
+                    <div className="field">
+                        <label htmlFor="precio" className="font-bold">Precio *</label>
+                        <InputNumber
+                            id="precio"
+                            value={form.precio}
+                            onValueChange={(e) => setForm({ ...form, precio: e.value })}
+                            className="w-full"
+                            placeholder="0.00"
+                            mode="currency"
+                            currency="USD"
+                            locale="es-AR"
+                            min={0}
+                        />
+                    </div>
+
+                    <div className="field">
+                        <label htmlFor="descripcion" className="font-bold">Descripción</label>
+                        <InputTextarea
+                            id="descripcion"
+                            value={form.descripcion}
+                            onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+                            className="w-full"
+                            rows={3}
+                            placeholder="Descripción del plato (opcional)"
+                        />
+                    </div>
+
+                    <div className="field-checkbox">
+                        <InputSwitch
+                            inputId="disponibilidad"
+                            checked={form.disponibilidad}
+                            onChange={(e) => setForm({ ...form, disponibilidad: e.value })}
+                        />
+                        <label htmlFor="disponibilidad" className="ml-2">Disponible</label>
+                    </div>
+
+                    <div className="flex justify-content-end gap-2 mt-3">
+                        <Button
+                            label="Cancelar"
+                            icon="pi pi-times"
+                            outlined
+                            onClick={() => setShowDialog(false)}
+                        />
+                        <Button
+                            label="Guardar"
+                            icon="pi pi-check"
+                            onClick={handleSubmit}
+                            loading={loading}
+                        />
+                    </div>
+                </div>
+            </Dialog>
 
             <style>{`
                 .platos-container {
@@ -305,6 +448,21 @@ const PlatosView = () => {
                 .create-btn {
                     background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
                     border: none;
+                }
+
+                .field {
+                    margin-bottom: 1rem;
+                }
+
+                .field label {
+                    display: block;
+                    margin-bottom: 0.5rem;
+                }
+
+                .field-checkbox {
+                    display: flex;
+                    align-items: center;
+                    margin-top: 1rem;
                 }
 
                 :global(.custom-datatable .p-datatable-thead > tr > th) {

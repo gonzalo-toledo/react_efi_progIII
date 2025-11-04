@@ -7,98 +7,127 @@ import { Password } from 'primereact/password';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
+import { Divider } from "primereact/divider"
+import { useNavigate } from "react-router-dom";
 import authService from "../../services/authService.js";
 import axios from 'axios';
 
 const RegisterForm = () => {
   const { register } = useContext(AuthContext);
-  const [roles, setRoles] = useState([]);
-
-  useEffect(() => {
-  const fetchRoles = async () => {
-    try {
-      const response = await authService.roles();
-      const roleOptions = response.data.map(role => ({ label: role, value: role }));
-      setRoles(roleOptions);
-    } catch (error) {
-      console.error('Error fetching roles', error);
-    }
+  const navigate = useNavigate();
+  const handleSubmit = async (values) => {
+    const userData = {
+      nombre: values.name,
+      email: values.email,
+      password: values.password,
+      rol: 'Mesero',
+    };
+    await register(userData);
   };
-    fetchRoles();
-  }, []);
 
   const initialValues = {
     name: '',
     email: '',
     password: '',
-    rol: '',
   };
 
   const validationSchema = Yup.object().shape({
     name: Yup.string().required('Name is required'),
     email: Yup.string().email('Invalid email').required('Email is required'),
     password: Yup.string().required('Password is required'),
-    rol: Yup.string().required('Role is required'),
   });
 
-  const handleSubmit = async (values) => {
-    const userData = {
-      nombre: values.name,
-      email: values.email,
-      password: values.password,
-      rol: values.rol,
-    };
-    await register(userData);
+
+return (
+      <div className="card">
+        <div className="flex flex-column align-items-center gap-3 py-5">
+          <h2 className="text-3xl font-bold m-0 mb-3">Crear Cuenta</h2>
+          
+          <Formik
+            initialValues={initialValues}
+            validationSchema={validationSchema}
+            onSubmit={handleSubmit}
+          >
+            {({ handleChange, values, isSubmitting }) => (
+              <Form className="w-full flex flex-column align-items-center gap-3">
+                <div className="w-full md:w-20rem">
+                  <div className="flex flex-column gap-2">
+                    <label htmlFor="name" className="font-semibold">Nombre</label>
+                    <InputText
+                      id="name"
+                      name="name"
+                      value={values.name}
+                      onChange={handleChange}
+                      placeholder="Tu nombre completo"
+                      className="w-full"
+                    />
+                    <small className="p-error">
+                      <ErrorMessage name="name" />
+                    </small>
+                  </div>
+                </div>
+
+                <div className="w-full md:w-20rem">
+                  <div className="flex flex-column gap-2">
+                    <label htmlFor="email" className="font-semibold">Email</label>
+                    <InputText
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={values.email}
+                      onChange={handleChange}
+                      placeholder="ejemplo@email.com"
+                      className="w-full"
+                    />
+                    <small className="p-error">
+                      <ErrorMessage name="email" />
+                    </small>
+                  </div>
+                </div>
+
+                <div className="w-full md:w-20rem">
+                  <div className="flex flex-column gap-2">
+                    <label htmlFor="password" className="font-semibold">Contraseña</label>
+                    <Password
+                      id="password"
+                      name="password"
+                      value={values.password}
+                      onChange={handleChange}
+                      placeholder="Mínimo 6 caracteres"
+                      className="w-full"
+                      inputClassName="w-full"
+                      toggleMask
+                    />
+                    <small className="p-error">
+                      <ErrorMessage name="password" />
+                    </small>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  label="Registrarse"
+                  icon="pi pi-user-plus"
+                  severity="success"
+                  className="w-full md:w-20rem mt-3"
+                  disabled={isSubmitting}
+                />
+              </Form>
+            )}
+          </Formik>
+
+          <Divider className="w-full md:w-20rem" />
+
+          <Button
+            label="¿Ya tienes cuenta? Inicia sesión"
+            link
+            className="p-0"
+            onClick={() => navigate('/login')}
+          />
+        </div>
+      </div>
+    );
   };
 
-  return (
-    <Card title="Register">
-      <Formik
-        initialValues={initialValues}
-        validationSchema={validationSchema}
-        onSubmit={handleSubmit}
-      >
-        {({ handleChange, values, setFieldValue }) => (
-          <Form className="p-fluid">
-            <div className="field p-2">
-              <label htmlFor="name">Nombre</label>
-              <InputText id="name" name="name" value={values.name} onChange={handleChange} />
-              <ErrorMessage name="name" component="div" className="p-error" />
-            </div>
-
-            <div className="field p-2">
-              <label htmlFor="email">Email</label>
-              <InputText id="email" name="email" type="email" value={values.email} onChange={handleChange} />
-              <ErrorMessage name="email" component="div" className="p-error" />
-            </div>
-
-            <div className="field p-2">
-              <label htmlFor="password">Contraseña</label>
-              <Password id="password" name="password" value={values.password} onChange={handleChange} />
-              <ErrorMessage name="password" component="div" className="p-error" />
-            </div>
-
-            <div className="field p-2">
-              <label htmlFor="rol">Rol</label>
-              <Dropdown
-                id="rol"
-                name="rol"
-                value={values.rol}
-                options={roles}
-                onChange={(e) => setFieldValue('rol', e.value)}
-                placeholder="Seleccione un rol"
-              />
-              <ErrorMessage name="rol" component="div" className="p-error" />
-            </div>
-
-            <div className="field p-2">
-              <Button type="submit" label="Register" className="p-button-primary" />
-            </div>
-          </Form>
-        )}
-      </Formik>
-    </Card>
-  );
-};
 
 export default RegisterForm;

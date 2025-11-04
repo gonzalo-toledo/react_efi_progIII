@@ -1,34 +1,100 @@
 // layouts/mesas/MesasView.jsx
-import { Fragment, useContext } from "react";
+import { Fragment, useContext, useState } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { MesasContext } from "../../context/MesasContext";
 import { AuthContext } from "../../context/AuthContext";
 import { Button } from "primereact/button";
-import { useNavigate } from "react-router-dom";
 import { InputText } from "primereact/inputtext";
 import { confirmDialog, ConfirmDialog } from "primereact/confirmdialog";
 import { InputSwitch } from "primereact/inputswitch";
 import { Card } from "primereact/card";
 import { Tag } from "primereact/tag";
+import { Dialog } from "primereact/dialog";
+import { InputNumber } from "primereact/inputnumber";
 
 const MesasView = () => {
     const {
         mesas,
-        setEditingMesa,
         loading,
         lazy,
         setLazy,
         deleteMesa,
         toggleDisponibilidad,
+        createMesa,
+        editMesa,
     } = useContext(MesasContext);
 
     const { user } = useContext(AuthContext);
-    const navigate = useNavigate();
 
+    // Estados para el modal
+    const [showDialog, setShowDialog] = useState(false);
+    const [editMode, setEditMode] = useState(false);
+    const [form, setForm] = useState({
+        id: null,
+        numero: '',
+        capacidad: '',
+        disponible: true,
+    });
+
+    // Abrir modal para crear
+    const openNew = () => {
+        setForm({
+            id: null,
+            numero: '',
+            capacidad: '',
+            disponible: true,
+        });
+        setEditMode(false);
+        setShowDialog(true);
+    };
+
+    // Abrir modal para editar
     const handleEdit = (mesa) => {
-        setEditingMesa(mesa);
-        navigate(`/mesas/editar/${mesa.id}`);
+        setForm({
+            id: mesa.id,
+            numero: mesa.numero,
+            capacidad: mesa.capacidad,
+            disponible: mesa.disponible,
+        });
+        setEditMode(true);
+        setShowDialog(true);
+    };
+
+    // Enviar formulario
+    const handleSubmit = async () => {
+        // Validaciones básicas
+        if (!form.numero || form.numero <= 0) {
+            alert('El número de mesa debe ser mayor a 0');
+            return;
+        }
+        if (!form.capacidad || form.capacidad <= 0) {
+            alert('La capacidad debe ser mayor a 0');
+            return;
+        }
+
+        const payload = {
+            numero: form.numero,
+            capacidad: form.capacidad,
+            disponible: form.disponible,
+        };
+
+        let success;
+        if (editMode) {
+            success = await editMesa({ ...payload, id: form.id });
+        } else {
+            success = await createMesa(payload);
+        }
+
+        if (success) {
+            setShowDialog(false);
+            setForm({
+                id: null,
+                numero: '',
+                capacidad: '',
+                disponible: true,
+            });
+        }
     };
 
     const handleDelete = (id) => {
@@ -135,7 +201,7 @@ const MesasView = () => {
                         <Button
                             label="Nueva Mesa"
                             icon="pi pi-plus"
-                            onClick={() => navigate("/mesas/crear")}
+                            onClick={openNew}
                             size="large"
                             className="create-btn"
                         />
@@ -250,10 +316,68 @@ const MesasView = () => {
                                 style={{ minWidth: '150px' }}
                             />
                         )}
-                        
                     </DataTable>
                 </Card>
             </div>
+
+            {/* Dialog Modal */}
+            <Dialog
+                visible={showDialog}
+                style={{ width: '450px' }}
+                header={editMode ? 'Editar Mesa' : 'Nueva Mesa'}
+                modal
+                onHide={() => setShowDialog(false)}
+            >
+                <div className="flex flex-column gap-3">
+                    <div className="field">
+                        <label htmlFor="numero" className="font-bold">Número *</label>
+                        <InputNumber
+                            id="numero"
+                            value={form.numero}
+                            onValueChange={(e) => setForm({ ...form, numero: e.value })}
+                            className="w-full"
+                            placeholder="Ingrese el número de mesa"
+                            min={1}
+                        />
+                    </div>
+
+                    <div className="field">
+                        <label htmlFor="capacidad" className="font-bold">Capacidad *</label>
+                        <InputNumber
+                            id="capacidad"
+                            value={form.capacidad}
+                            onValueChange={(e) => setForm({ ...form, capacidad: e.value })}
+                            className="w-full"
+                            placeholder="Número de personas"
+                            min={1}
+                        />
+                    </div>
+
+                    <div className="field-checkbox">
+                        <InputSwitch
+                            inputId="disponible"
+                            checked={form.disponible}
+                            onChange={(e) => setForm({ ...form, disponible: e.value })}
+                        />
+                        <label htmlFor="disponible" className="ml-2">Disponible</label>
+                    </div>
+
+                    <div className="flex justify-content-end gap-2 mt-3">
+                        <Button
+                            label="Cancelar"
+                            icon="pi pi-times"
+                            outlined
+                            onClick={() => setShowDialog(false)}
+                        />
+                        <Button
+                            label="Guardar"
+                            icon="pi pi-check"
+                            onClick={handleSubmit}
+                            loading={loading}
+                        />
+                    </div>
+                </div>
+            </Dialog>
 
             <style>{`
                 .mesas-container {
@@ -335,6 +459,21 @@ const MesasView = () => {
                 .create-btn {
                     background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
                     border: none;
+                }
+
+                .field {
+                    margin-bottom: 1rem;
+                }
+
+                .field label {
+                    display: block;
+                    margin-bottom: 0.5rem;
+                }
+
+                .field-checkbox {
+                    display: flex;
+                    align-items: center;
+                    margin-top: 1rem;
                 }
 
                 :global(.custom-datatable .p-datatable-thead > tr > th) {

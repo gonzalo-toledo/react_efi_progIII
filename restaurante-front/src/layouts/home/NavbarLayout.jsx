@@ -134,11 +134,11 @@ const NavbarLayout = () => {
             {
                 label: 'Cuenta',
                 items: [
-                    {
-                        label: 'Mi Perfil',
-                        icon: 'pi pi-user',
-                        command: () => navigate('/profile')
-                    },
+                    // {
+                    //     label: 'Mi Perfil',
+                    //     icon: 'pi pi-user',
+                    //     command: () => navigate('/profile')
+                    // },
                     {
                         label: 'Cerrar Sesión',
                         icon: 'pi pi-sign-out',

@@ -11,6 +11,7 @@ import usersService from '../../services/usersService';
 import authService from '../../services/authService';
 import { notifySucces, notifyError } from '../../utils/Notifier';
 import { AuthContext } from '../../context/AuthContext';
+import { Password } from 'primereact/password';
 
 const UsersPanel = () => {
     const { user: currentUser } = useContext(AuthContext);
@@ -245,25 +246,40 @@ const UsersPanel = () => {
 
             <Dialog
                 visible={showDialog}
-                style={{ width: '450px' }}
-                header={editMode ? 'Editar Usuario' : 'Nuevo Usuario'}
+                style={{ width: '480px', maxWidth: '90vw' }}
+                header={
+                    <div className="flex align-items-center gap-2">
+                        <i className={`pi ${editMode ? 'pi-user-edit text-primary' : 'pi-user-plus text-green-500'}`} />
+                        <span className="text-xl font-semibold">
+                            {editMode ? 'Editar Usuario' : 'Nuevo Usuario'}
+                        </span>
+                    </div>
+                }
                 modal
+                draggable={false}
+                className="p-fluid"
                 onHide={() => setShowDialog(false)}
             >
-                <div className="flex flex-column gap-3">
-                    <div className="field">
-                        <label htmlFor="nombre" className="font-bold">Nombre *</label>
+                <div className="flex flex-column gap-4 mt-3">
+                    {/* Nombre */}
+                    <div>
+                        <label htmlFor="nombre" className="font-medium mb-2 block">
+                            Nombre <span className="text-red-500"></span>
+                        </label>
                         <InputText
                             id="nombre"
                             value={form.nombre}
                             onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                             className="w-full"
-                            placeholder="Ingrese el nombre"
+                            placeholder="Ej: Juan Pérez"
                         />
                     </div>
 
-                    <div className="field">
-                        <label htmlFor="email" className="font-bold">Email *</label>
+                    {/* Email */}
+                    <div>
+                        <label htmlFor="email" className="font-medium mb-2 block">
+                            Email <span className="text-red-500"></span>
+                        </label>
                         <InputText
                             id="email"
                             type="email"
@@ -274,61 +290,77 @@ const UsersPanel = () => {
                         />
                     </div>
 
-                    <div className="field">
-                        <label htmlFor="password" className="font-bold">
-                            Contraseña {editMode ? '(dejar vacío para no cambiar)' : '*'}
-                        </label>
-                        <InputText
-                            id="password"
-                            type="password"
-                            value={form.password}
-                            onChange={(e) => setForm({ ...form, password: e.target.value })}
-                            className="w-full"
-                            placeholder={editMode ? 'Nueva contraseña (opcional)' : 'Mínimo 6 caracteres'}
-                        />
+                    {/* Contraseña */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label htmlFor="password" className="font-medium mb-2 block">
+                                Contraseña {editMode && <span className="text-500">(opcional)</span>}
+                            </label>
+                            <Password
+                                id="password"
+                                toggleMask
+                                feedback={false}
+                                value={form.password}
+                                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                                placeholder={editMode ? 'Nueva contraseña' : 'Mínimo 6 caracteres'}
+                                className="w-full"
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="confirmPassword" className="font-medium mb-2 block">
+                                Confirmar {editMode && <span className="text-500">(si la cambió)</span>}
+                            </label>
+                            <Password
+                                id="confirmPassword"
+                                toggleMask
+                                feedback={false}
+                                value={form.confirmPassword}
+                                onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                                placeholder="Repetir contraseña"
+                                className="w-full"
+                            />
+                        </div>
                     </div>
 
-                    <div className="field">
-                        <label htmlFor="confirmPassword" className="font-bold">
-                            Confirmar Contraseña {editMode && '(si la cambió)'}
+                    {/* Rol */}
+                    <div>
+                        <label htmlFor="rol" className="font-medium mb-2 block">
+                            Rol <span className="text-red-500"></span>
                         </label>
-                        <InputText
-                            id="confirmPassword"
-                            type="password"
-                            value={form.confirmPassword}
-                            onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-                            className="w-full"
-                            placeholder="Repita la contraseña"
-                        />
-                    </div>
-
-                    <div className="field">
-                        <label htmlFor="rol" className="font-bold">Rol *</label>
                         <Dropdown
                             id="rol"
                             value={form.rol}
                             options={roles}
+                            optionLabel="label"
+                            optionValue="value"
                             onChange={(e) => setForm({ ...form, rol: e.value })}
                             placeholder="Seleccione un rol"
                             className="w-full"
+                            showClear
                         />
                     </div>
 
-                    <div className="flex justify-content-end gap-2 mt-3">
+                    {/* Botones */}
+                    <div className="flex justify-content-end gap-2 mt-4 border-top-1 surface-border pt-3">
                         <Button
                             label="Cancelar"
                             icon="pi pi-times"
+                            severity="secondary"
                             outlined
                             onClick={() => setShowDialog(false)}
+                            className="px-4"
                         />
                         <Button
                             label="Guardar"
                             icon="pi pi-check"
                             onClick={handleSubmit}
+                            className="px-4"
                         />
                     </div>
                 </div>
             </Dialog>
+
         </div>
     );
 };

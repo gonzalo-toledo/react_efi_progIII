@@ -105,7 +105,6 @@ const PlatosView = () => {
     };
 
     const stats = getStats();
-    console.log("Render PlatosView user:", user);
 
     return (
         <Fragment>
